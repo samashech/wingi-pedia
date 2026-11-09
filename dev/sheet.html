@@ -1,0 +1,7 @@
+<!doctype html><meta charset=utf8><body style="margin:0;background:#8a8478;display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:6px;font:11px sans-serif">
+<script type=module>
+import {SPECIES} from '/src/data.js'; import {paintWing, drawSpecimen} from '/src/wings.js';
+const t0=performance.now();
+for (const s of SPECIES){ const c=drawSpecimen(paintWing(s.wings), s.wings.body, .5); c.style.width='100%'; const d=document.createElement('div'); d.style.background=s.ground.bg; d.style.color=s.ground.ink; d.append(c, s.common); document.body.append(d);}
+document.title='done '+Math.round(performance.now()-t0);
+</script>

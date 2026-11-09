@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wingbook — butterflies, arranged by colour</title>
+  <meta name="description" content="An atlas of twenty-two butterflies arranged by colour. Scroll the spectrum; open any butterfly to read its page." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 16C10 4 2 6 3 14c1 6 8 6 13 2-3 5-9 8-6 12 3 3 6-4 6-12 0 8 3 15 6 12 3-4-3-7-6-12 5 4 12 4 13-2 1-8-7-10-13 2z' fill='%23d8452b'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div class="ground" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="mark" href="#top">Wingbook</a>
+    <a class="top-link" href="#cabinet">The cabinet</a>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Butterflies by colour"></nav>
+
+  <main id="flow">
+    <section class="hero" id="top">
+      <div class="hero-in">
+        <p class="hero-kicker">An atlas in six colours</p>
+        <h1>Colour,<br /><em>on the wing</em></h1>
+        <p class="hero-sub">Twenty-two butterflies, arranged the way a painter would arrange them: by colour. Scroll to walk the spectrum. Touch a butterfly to open its page.</p>
+      </div>
+      <ol class="spectrum" id="spectrum" aria-label="Chapters"></ol>
+    </section>
+    <!-- chapters, butterflies and the cabinet are generated in main.js -->
+  </main>
+
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="hint" id="hint" aria-hidden="true">Open its page</div>
+
+  <div class="book" id="book" role="dialog" aria-modal="true" aria-label="Encyclopedia page" hidden>
+    <div class="veil"></div>
+    <button class="book-close" id="bookClose" type="button">Close the book</button>
+    <div class="spread" id="spread">
+      <article class="page left" id="pageL"></article>
+      <article class="page right" id="pageR"></article>
+      <div class="leaf" id="leaf" hidden><div class="page face front"></div><div class="page face back"></div></div>
+    </div>
+    <button class="turn prev" id="turnPrev" type="button" aria-label="Previous butterfly"><span>&larr;</span></button>
+    <button class="turn next" id="turnNext" type="button" aria-label="Next butterfly"><span>&rarr;</span></button>
+  </div>
+
+  <div class="loader" id="loader"><p><em>Pinning specimens</em> <span id="loadN">0</span> / 22</p></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
