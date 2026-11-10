@@ -1,7 +1,8 @@
 // Procedural wing painter.
 // Every butterfly is described as a wing outline plus a stack of pattern layers
 // written in "wing space": t runs from the wing base (0) to the margin (1),
-// u runs from the leading edge (0) to the trailing edge (1). Nothing is a photo.
+// u runs from the leading edge (0) to the trailing edge (1). A few species are photographs
+// instead (see loadPhoto); the painted wing is their fallback.
 
 export const TW = 512;          // texture width  = 1 wing unit
 export const TH = 608;          // texture height
@@ -11,7 +12,10 @@ export const HINGE_V = HY / TW; // distance from top of plane to hinge, in units
 
 const N = 720, A = 2.3; // polar table: N bins over [-A, A] radians
 
-const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const hex = (h) => {
+  if (h.length === 4) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+};
 const ss = (a, b, x) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
@@ -165,6 +169,8 @@ function compile(layers, wings) {
 }
 
 const px = { r: 0, g: 0, b: 0, a: 1 };
+// discal cell per wing: [where it closes (t), its leading boundary (u), its trailing boundary (u)]
+const FCELL = [0.46, 0.2, 0.56], HCELL = [0.42, 0.26, 0.62];
 
 function shade(Ls, id, t, u, r, x, y, W) {
   let R = 0, G = 0, B = 0, Al = 1;
@@ -197,10 +203,30 @@ function shade(Ls, id, t, u, r, x, y, W) {
         break;
       }
       case 'v': {
-        const f = u * L.n + 0.5, fr = f - Math.floor(f);
-        const d = (Math.abs(fr - 0.5) / L.n) * W.span * r;
-        const w = L.w * (0.6 + 0.8 * t);
-        al = (1 - ss(w * 0.5, w, d)) * ss(L.t0 ?? 0.05, (L.t0 ?? 0.05) + 0.12, t);
+        // Real venation: a closed discal cell near the base, veins leaving its outer end,
+        // and the outer veins branching off the cell's two boundary veins. Thick at the root.
+        const [cT, c0, c1] = (L.cell && L.cell[id]) || (id === 'f' ? FCELL : HCELL);
+        const k = W.span * r, rad = r / Math.max(t, 1e-3);
+        let d = 9;
+        if (t < cT + 0.005) d = Math.min(Math.abs(u - c0), Math.abs(u - c1)) * k;
+        if (u > c0 && u < c1) d = Math.min(d, Math.abs(t - cT - 0.035 * Math.sin((Math.PI * (u - c0)) / (c1 - c0))) * rad);
+        for (let j = 1; j < L.n; j++) {
+          const uk = j / L.n;
+          let uu;
+          if (uk > c0 && uk < c1) {
+            if (t < cT) continue;
+            uu = uk;
+          } else {
+            const ub = uk <= c0 ? c0 : c1;
+            const tb = 0.08 + cT * 0.85 * Math.max(0, 1 - Math.abs(uk - ub) * 2.6);
+            if (t < tb) continue;
+            uu = ub + (uk - ub) * Math.pow(Math.min(1, (t - tb) / (1 - tb)), 0.55);
+          }
+          const dd = Math.abs(u - uu) * k;
+          if (dd < d) d = dd;
+        }
+        const w = L.w * (1.45 - 0.75 * t);
+        al = (1 - ss(w * 0.45, w, d)) * ss(L.t0 ?? 0.05, (L.t0 ?? 0.05) + 0.12, t);
         break;
       }
       case 'th': {
@@ -267,6 +293,11 @@ export function paintWing(spec) {
   const Ls = compile(spec.layers, { f: F, h: H });
   const edge = hex(spec.edge || '#15100c');
   const edgeA = spec.edgeA ?? 0.6;
+  const bodyC = hex((spec.body && (spec.body.c)) || '#1b1613');
+  const FR = spec.fringe ?? 0.014; // width of the hair fringe beyond the scaled margin, in wing units
+  const fringeC = spec.fringeC ? hex(spec.fringeC) : null;
+  const veinN = (spec.layers.find((L) => L.k === 'v') || { n: 9 }).n;
+  const hairA = spec.hairA ?? 0.55;
 
   const cv = document.createElement('canvas');
   cv.width = TW; cv.height = TH;
@@ -279,22 +310,63 @@ export function paintWing(spec) {
       const x = (pxl + 0.5) / TW, y = (py + 0.5 - HY) / TW;
       let dx = x - F.ox, dy = y - F.oy;
       const rf = Math.sqrt(dx * dx + dy * dy), thf = Math.atan2(dy, dx), Rf = lookup(F, thf);
-      const covF = Rf > 0 ? Math.min(1, Math.max(0, ((Rf - rf) * TW) / 1.4 + 0.5)) : 0;
+      const covF = Rf > 0 ? Math.min(1, Math.max(0, ((Rf + FR - rf) * TW) / 1.4 + 0.5)) : 0;
       dx = x - H.ox; dy = y - H.oy;
       const rh = Math.sqrt(dx * dx + dy * dy), thh = Math.atan2(dy, dx), Rh = lookup(H, thh);
-      const covH = Rh > 0 ? Math.min(1, Math.max(0, ((Rh - rh) * TW) / 1.4 + 0.5)) : 0;
+      const covH = Rh > 0 ? Math.min(1, Math.max(0, ((Rh + FR - rh) * TW) / 1.4 + 0.5)) : 0;
       if (covF <= 0 && covH <= 0) continue;
+
+      // Scales are laid like roof tiles, so no colour boundary is a clean line: warp pattern space a little.
+      const w1 = noise(x * 22, y * 22) - 0.5, w2 = noise(x * 22 + 31.7, y * 22 + 7.3) - 0.5;
+      const w3 = noise(x * 70, y * 70) - 0.5, w4 = noise(x * 70 + 13.1, y * 70 + 41.9) - 0.5;
+      const wx = (w1 * 0.75 + w3 * 0.25) * 0.016, wy = (w2 * 0.75 + w4 * 0.25) * 0.016;
+      const sx = x + wx, sy = y + wy;
 
       let r = 0, g = 0, b = 0, a = 0;
       const finish = (id, t, u, rr, W) => {
-        shade(Ls, id, t, u, rr, x, y, W);
-        const grain = 1 + 0.045 * Math.sin(u * 210 + noise(x * 40, y * 40) * 4) * ss(0.1, 0.4, t) + (hash(pxl, py) - 0.5) * 0.05;
+        const R0 = rr / Math.max(t, 1e-6);
+        // Along the forewing's inner edge the rays from the root run nearly parallel to the outline,
+        // which squeezes every band into a thin seam. Measure there against a ray further in.
+        let tp = t;
+        if (id === 'f' && u > 0.86) {
+          const Ri = lookup(W, W.th0 + 0.86 * W.span);
+          tp = t + (Math.min(rr / Ri, 1.2) - t) * ss(0.86, 0.95, u);
+        }
+        const tw = tp + (wx * 0.9 + wy * 0.6) / Math.max(R0, 0.1);
+        const uw = u + (wy * 0.9 - wx * 0.6) / Math.max(R0 * W.span * Math.max(t, 0.15), 0.05);
+        shade(Ls, id, tw, uw, rr, sx, sy, W);
+        // fine striations along the scale rows, and per-pixel dust
+        const grain = 1 + 0.05 * Math.sin(u * 230 + noise(x * 40, y * 40) * 5) * ss(0.1, 0.4, t) + (hash(pxl, py) - 0.5) * 0.07 + (noise(x * 160, y * 160) - 0.5) * 0.06;
         const k = (0.7 + 0.3 * ss(0, 0.22, t)) * grain;
-        const e = ss(0.965, 0.99, t) * edgeA;
+        // only the outer margins carry a fringe; the costa and the inner edges end clean
+        const fu = ss(0.05, 0.13, u) * (1 - ss(0.84, 0.94, u));
+        const e = ss(0.955, 0.99, t) * edgeA * (1 - ss(1.0, 1.01, t) * fu);
         px.r = px.r * k + (edge[0] - px.r * k) * e;
         px.g = px.g * k + (edge[1] - px.g * k) * e;
         px.b = px.b * k + (edge[2] - px.b * k) * e;
         px.a += (1 - px.a) * e;
+        // hair at the wing root (and along the inner edge of the hindwing), the colour of body and wing mixed
+        let h = ss(0.34, 0.02, t);
+        if (id === 'h') h = Math.max(h, ss(0.78, 0.98, u) * ss(0.8, 0.15, t) * 0.8);
+        if (h > 0) {
+          const strand = noise(u * W.span * rr * 520, t * 7 + (id === 'h' ? 50 : 0));
+          h *= hairA * (0.45 + 0.55 * strand);
+          px.r += (px.r * 0.5 + bodyC[0] * 0.3 + 40 - px.r) * h;
+          px.g += (px.g * 0.5 + bodyC[1] * 0.3 + 36 - px.g) * h;
+          px.b += (px.b * 0.5 + bodyC[2] * 0.3 + 30 - px.b) * h;
+        }
+        // the fringe: short hairs past the scaled margin, paler, interrupted where veins run out
+        if (t > 1 && fu <= 0) px.a *= 1 - ss(0, 1.5, (rr - R0) * TW);
+        else if (t > 1) {
+          const f = (rr - R0) / (FR * fu);
+          const strand = noise(u * W.span * R0 * 900, f * 2.5);
+          const chk = 0.5 + 0.5 * Math.cos(6.2832 * u * veinN);
+          const lift = fringeC ? 1 : 0.35;
+          const fc = fringeC || [px.r + (235 - px.r) * 0.3, px.g + (225 - px.g) * 0.3, px.b + (210 - px.b) * 0.3];
+          const m = lift * fu * (1 - ss(0.55, 0.95, chk) * 0.85);
+          px.r += (fc[0] - px.r) * m; px.g += (fc[1] - px.g) * m; px.b += (fc[2] - px.b) * m;
+          px.a *= (1 - ss(0.25, 1, f)) * ss(0.2, 0.6, strand + 0.35 * (1 - f));
+        }
       };
       if (covH > 0) {
         finish('h', rh / Rh, (thh - H.th0) / H.span, rh, H);
@@ -321,56 +393,101 @@ export function paintWing(spec) {
 }
 
 // Body, drawn in wing units around (cx, cy) at `s` pixels per unit.
+// Antennae with clubs, a head with compound eyes and palps, a furred thorax, a ringed abdomen.
+const tint = (h, k) => { const [r, g, b] = hex(h); const f = (v) => Math.round(Math.min(255, Math.max(0, k > 0 ? v + (255 - v) * k : v * (1 + k)))); return `rgb(${f(r)},${f(g)},${f(b)})`; };
 export function drawBody(ctx, cx, cy, s, body = {}, antennae = true) {
   const c = body.c || '#1b1613', abd = body.abd || c, head = body.head || c, len = body.len || 0.34;
+  const fur = body.fur || tint(c, 0.32);
+  let seed = 9;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   ctx.save();
   ctx.translate(cx, cy);
   ctx.scale(s, s);
+  ctx.lineCap = 'round';
   if (antennae) {
-    ctx.strokeStyle = c; ctx.lineCap = 'round';
     for (const d of [-1, 1]) {
-      ctx.lineWidth = 0.006;
-      ctx.beginPath();
-      ctx.moveTo(d * 0.012, -0.125);
-      ctx.bezierCurveTo(d * 0.03, -0.24, d * 0.09, -0.33, d * 0.15, -0.385);
-      ctx.stroke();
-      ctx.lineWidth = 0.014;
-      ctx.beginPath();
-      ctx.moveTo(d * 0.138, -0.374);
-      ctx.lineTo(d * 0.153, -0.388);
-      ctx.stroke();
+      const P = (t) => {
+        const m = 1 - t;
+        return [d * (m * m * m * 0.012 + 3 * m * m * t * 0.03 + 3 * m * t * t * 0.09 + t * t * t * 0.15),
+          m * m * m * -0.13 + 3 * m * m * t * -0.24 + 3 * m * t * t * -0.33 + t * t * t * -0.385];
+      };
+      // the shaft, ringed light and dark
+      for (let i = 0; i < 40; i++) {
+        const t0 = i / 40, t1 = (i + 1) / 40, [x0, y0] = P(t0), [x1, y1] = P(t1);
+        const club = ss(0.78, 0.97, t1);
+        ctx.strokeStyle = i % 2 && i < 31 ? tint(c, 0.16) : c;
+        ctx.lineWidth = 0.0045 + club * 0.011;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      }
+      const [tx, ty] = P(1);
+      ctx.fillStyle = body.tip || tint(c, 0.45);
+      ctx.beginPath(); ctx.arc(tx, ty, 0.0055, 0, 6.3); ctx.fill();
     }
   }
-  const lg = (col) => {
-    const g = ctx.createLinearGradient(-0.04, 0, 0.04, 0);
-    g.addColorStop(0, '#000');
-    g.addColorStop(0.45, col);
-    g.addColorStop(1, '#000');
+  const lg = (col, w = 0.04) => {
+    const g = ctx.createLinearGradient(-w, 0, w, 0);
+    g.addColorStop(0, tint(col, -0.75));
+    g.addColorStop(0.42, tint(col, 0.12));
+    g.addColorStop(0.55, col);
+    g.addColorStop(1, tint(col, -0.8));
     return g;
   };
-  // abdomen
-  ctx.fillStyle = lg(abd);
+  const hairs = (x0, y0, rx, ry, n, col, lenH, out = 0) => {
+    ctx.strokeStyle = col;
+    for (let i = 0; i < n; i++) {
+      const a = rnd() * 6.283, rr = Math.sqrt(rnd());
+      const x = x0 + Math.cos(a) * rx * rr, y = y0 + Math.sin(a) * ry * rr;
+      const dir = Math.atan2(y - y0, (x - x0) * 0.6) * out + (1 - out) * (Math.PI / 2 + (rnd() - 0.5) * 1.2);
+      const l = lenH * (0.5 + rnd());
+      ctx.globalAlpha = 0.25 + rnd() * 0.45;
+      ctx.lineWidth = 0.0018 + rnd() * 0.0016;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(dir) * l, y + Math.sin(dir) * l); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  };
+  // abdomen: tapered, ringed, furred along the sides
+  ctx.fillStyle = lg(abd, 0.03);
   ctx.beginPath();
-  ctx.moveTo(-0.026, 0.02);
-  ctx.bezierCurveTo(-0.034, len * 0.45, -0.014, len * 0.95, 0, len);
-  ctx.bezierCurveTo(0.014, len * 0.95, 0.034, len * 0.45, 0.026, 0.02);
+  ctx.moveTo(-0.025, 0.03);
+  ctx.bezierCurveTo(-0.033, len * 0.45, -0.014, len * 0.95, 0, len);
+  ctx.bezierCurveTo(0.014, len * 0.95, 0.033, len * 0.45, 0.025, 0.03);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 0.004;
-  for (let i = 1; i < 7; i++) {
-    const yy = 0.04 + ((len - 0.07) * i) / 7;
-    ctx.beginPath(); ctx.moveTo(-0.028, yy); ctx.quadraticCurveTo(0, yy + 0.012, 0.028, yy); ctx.stroke();
+  for (let i = 1; i < 8; i++) {
+    const yy = 0.04 + ((len - 0.06) * i) / 8, hw = 0.029 * (1 - (i / 8) ** 2 * 0.55);
+    ctx.strokeStyle = 'rgba(0,0,0,.42)'; ctx.lineWidth = 0.004;
+    ctx.beginPath(); ctx.moveTo(-hw, yy); ctx.quadraticCurveTo(0, yy + 0.012, hw, yy); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 0.003;
+    ctx.beginPath(); ctx.moveTo(-hw * 0.8, yy + 0.006); ctx.quadraticCurveTo(0, yy + 0.017, hw * 0.8, yy + 0.006); ctx.stroke();
   }
-  // thorax
-  ctx.fillStyle = lg(c);
-  ctx.beginPath(); ctx.ellipse(0, -0.028, 0.037, 0.078, 0, 0, 6.3); ctx.fill();
-  // head
-  ctx.fillStyle = lg(head);
-  ctx.beginPath(); ctx.ellipse(0, -0.118, 0.026, 0.024, 0, 0, 6.3); ctx.fill();
+  hairs(0, len * 0.25, 0.026, len * 0.22, 40, fur, 0.007, 1);
+  // thorax: a dense coat of hair over a dark core
+  ctx.fillStyle = lg(c, 0.042);
+  ctx.beginPath(); ctx.ellipse(0, -0.03, 0.04, 0.08, 0, 0, 6.3); ctx.fill();
+  hairs(0, -0.03, 0.042, 0.08, 260, fur, 0.016, 1);
+  hairs(0, -0.04, 0.02, 0.05, 80, tint(c, 0.5), 0.01, 0.3);
+  // head, palps and the two great compound eyes
+  ctx.fillStyle = lg(head, 0.03);
+  ctx.beginPath(); ctx.ellipse(0, -0.118, 0.026, 0.023, 0, 0, 6.3); ctx.fill();
+  hairs(0, -0.115, 0.02, 0.016, 40, fur, 0.008, 1);
+  ctx.fillStyle = tint(c, 0.15);
+  for (const d of [-1, 1]) {
+    ctx.beginPath(); ctx.ellipse(d * 0.007, -0.143, 0.005, 0.014, d * 0.25, 0, 6.3); ctx.fill();
+  }
+  for (const d of [-1, 1]) {
+    const g = ctx.createRadialGradient(d * 0.021 - d * 0.004, -0.124, 0.001, d * 0.02, -0.12, 0.014);
+    g.addColorStop(0, body.eye ? tint(body.eye, 0.4) : '#6b6052');
+    g.addColorStop(0.35, body.eye || '#2b241d');
+    g.addColorStop(1, '#070605');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(d * 0.02, -0.12, 0.012, 0.014, 0, 0, 6.3); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.arc(d * 0.017, -0.126, 0.0025, 0, 6.3); ctx.fill();
+  }
   ctx.restore();
 }
 
 // A flat, pinned specimen: both wing pairs plus the body. Used for the book plate and the cabinet.
-export function drawSpecimen(wingCanvas, body, scale = 1, shadow = true) {
+export function drawSpecimen(wingCanvas, body, scale = 1, shadow = true, bodyImg = null) {
   const w = Math.round(TW * 2 * scale), h = Math.round(TH * scale);
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
@@ -388,8 +505,30 @@ export function drawSpecimen(wingCanvas, body, scale = 1, shadow = true) {
   ctx.scale(-1, 1);
   ctx.drawImage(wingCanvas, 0, 0, TW * scale, h);
   ctx.restore();
-  drawBody(ctx, w / 2, HY * scale, TW * scale, body);
+  if (bodyImg) ctx.drawImage(bodyImg, w / 2 - (TW * scale) / 4, 0, (TW * scale) / 2, h);
+  else drawBody(ctx, w / 2, HY * scale, TW * scale, body);
   return cv;
+}
+
+// Photographed specimens: <id>-wings.webp holds both wings (midline at centre, hinge at the same
+// height as the drawn ones, 1.5x scale); <id>-body.webp holds body + antennae.
+// One half is used for both sides, so the flying insect and the plate it lands on match exactly.
+const loadImg = (src) => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+export async function loadPhoto(id, { half = 'R', body = true } = {}) {
+  const [w, b] = await Promise.all([loadImg(`/specimens/${id}-wings.webp`), body ? loadImg(`/specimens/${id}-body.webp`) : null]);
+  const hw = w.width / 2;
+  const wing = document.createElement('canvas');
+  wing.width = hw; wing.height = w.height;
+  const x = wing.getContext('2d');
+  if (half === 'L') { x.translate(hw, 0); x.scale(-1, 1); x.drawImage(w, 0, 0, hw, w.height, 0, 0, hw, w.height); }
+  else x.drawImage(w, hw, 0, hw, w.height, 0, 0, hw, w.height);
+  let bodyCv = null;
+  if (b) {
+    bodyCv = document.createElement('canvas');
+    bodyCv.width = b.width; bodyCv.height = b.height;
+    bodyCv.getContext('2d').drawImage(b, 0, 0);
+  }
+  return { wing, body: bodyCv };
 }
 
 export function bodyTexture(body) {

@@ -1,0 +1,8 @@
+<!doctype html><meta charset=utf8><body style="margin:0;background:#e9dfc6;display:grid;grid-template-columns:1fr 1fr;gap:0">
+<script type=module>
+// dev/one.html?ids=peacock,monarch — full-size painted specimens, for checking detail
+import {SPECIES} from '/src/data.js'; import {paintWing, drawSpecimen} from '/src/wings.js';
+const ids = (new URLSearchParams(location.search).get('ids') || 'peacock').split(',');
+for (const id of ids){ const s=SPECIES.find(x=>x.id===id); const c=drawSpecimen(paintWing(s.wings), s.wings.body, 1); c.style.width='100%'; document.body.append(c);}
+document.title='done';
+</script>

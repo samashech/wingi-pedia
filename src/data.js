@@ -26,7 +26,8 @@ export const SPECIES = [
     ],
     colour: 'There is no blue pigment here. Each scale carries rows of ridges with stacked shelves, and light reflecting from the shelves reinforces itself only around the blue. Wet the wing with alcohol and it turns green; let it dry and the blue comes back.',
     chips: [['Ultramarine Blue', '#0b5bd6', 'the wing at rest'], ['Azure Blue', '#19a0ff', 'the wing turned to the sun'], ['Velvet Black', '#0b0a12', 'the margin'], ['Umber Brown', '#3a2414', 'the underside']],
-    iri: 0.9, iriC: '#7fe0ff',
+    iri: 0.5, iriC: '#7fe0ff',
+    photo: { half: 'R' }, // a photographed specimen; the painted wing below is the fallback
     wings: {
       shape: { base: 'broad' },
       layers: [
@@ -616,6 +617,7 @@ export const SPECIES = [
     colour: 'Clear is harder than it sounds; a plain film would glint. The membrane is covered in waxy pillars of random height, far smaller than a wavelength of light, which ease light through instead of bouncing it. It reflects less than glass does.',
     chips: [['No colour', '#d4e2d9', 'whatever is behind the wing'], ['Chestnut Brown', '#4a3020', 'the frame'], ['Snow White', '#f4f2ea', 'the forewing bar'], ['Tile Red', '#c8662a', 'the hindwing edge']],
     iri: 0.6, iriC: '#ffffff', glass: true,
+    photo: { half: 'L', body: false }, // the photo's body is too damaged to use; the drawn one stands in
     wings: {
       shape: { base: 'longwing', fore: { ax: 0.96, ay: -0.34 }, hind: { by: 0.4 } },
       edge: '#4a3020',

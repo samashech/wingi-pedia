@@ -30,7 +30,7 @@ It works on phones too.
 
 ## Good to know
 
-- Every butterfly is drawn by the site itself, not photographed. The drawings are simplified, so the real insects are more detailed than these.
+- Twenty of the butterflies are drawn by the site itself, scale by scale, and simplified, so the real insects are more detailed than these. The Blue Morpho and the Glasswing are photographs of real specimens.
 - There are around 18,000 kinds of butterfly. This is a first drawer, not the whole collection.
 - The colour names follow *Werner's Nomenclature of Colours* (1821), a book of colour names that naturalists, Darwin among them, carried into the field.
 

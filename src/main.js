@@ -1,5 +1,5 @@
 import { SPECIES, CHAPTERS } from './data.js';
-import { paintWing, bodyTexture, drawSpecimen } from './wings.js';
+import { paintWing, bodyTexture, drawSpecimen, loadPhoto } from './wings.js';
 import { Scene } from './scene.js';
 import { Book } from './book.js';
 
@@ -56,7 +56,7 @@ cab.id = 'cabinet';
 cab.innerHTML = `<h2>The <em>cabinet</em></h2>
   <p class="cab-sub">All twenty-two, pinned in the order of the spectrum. Choose one to read its page.</p>
   <div class="drawer" id="drawer"></div>
-  <p class="colophon">Every wing here is drawn in code from a description of its pattern; none is a photograph, and the drawings simplify what the living insect does better. About 18,000 butterfly species have been described, so this is a first drawer, not the whole cabinet. Colour names follow the manner of Werner’s Nomenclature of Colours (Syme, 1821).</p>`;
+  <p class="colophon">Most wings here are drawn in code from a description of their pattern, and the drawings simplify what the living insect does better; the Blue Morpho and the Glasswing are photographs of real specimens. About 18,000 butterfly species have been described, so this is a first drawer, not the whole cabinet. Colour names follow the manner of Werner’s Nomenclature of Colours (Syme, 1821).</p>`;
 flow.append(cab);
 stops.push({ el: cab, ground: CABINET, top: true });
 
@@ -68,12 +68,19 @@ const railBtns = [...document.querySelectorAll('#rail button')];
 const textures = [];
 for (let i = 0; i < SPECIES.length; i++) {
   const sp = SPECIES[i];
-  textures.push({ wing: paintWing(sp.wings), body: bodyTexture(sp.wings.body) });
+  let t = null;
+  if (sp.photo) {
+    try {
+      const p = await loadPhoto(sp.id, sp.photo);
+      t = { wing: p.wing, body: p.body || bodyTexture(sp.wings.body), photoBody: p.body };
+    } catch { /* fall back to the painted wing */ }
+  }
+  textures.push(t || { wing: paintWing(sp.wings), body: bodyTexture(sp.wings.body) });
   $('#loadN').textContent = i + 1;
   await frame();
 }
 const plates = [];
-const plateURL = (i) => (plates[i] ??= drawSpecimen(textures[i].wing, SPECIES[i].wings.body, 1).toDataURL());
+const plateURL = (i) => (plates[i] ??= drawSpecimen(textures[i].wing, SPECIES[i].wings.body, 1, true, textures[i].photoBody).toDataURL());
 
 const drawer = $('#drawer');
 SPECIES.forEach((sp, i) => {
@@ -83,7 +90,7 @@ SPECIES.forEach((sp, i) => {
   b.dataset.cab = i;
   b.style.setProperty('--cbg', sp.ground.bg);
   b.style.setProperty('--cink', sp.ground.ink);
-  b.append(drawSpecimen(textures[i].wing, sp.wings.body, 0.4));
+  b.append(drawSpecimen(textures[i].wing, sp.wings.body, 0.4, true, textures[i].photoBody));
   b.insertAdjacentHTML('beforeend', `<span><b>${sp.common}</b><small>${sp.latin}</small></span>`);
   drawer.append(b);
 });

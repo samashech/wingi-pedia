@@ -2,6 +2,18 @@
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII', 'XXIII', 'XXIV'];
 const PLATE_ASPECT = 1024 / 608;
+// Each spread wears differently: stains, mottling and a dog-ear placed from its index.
+const rand = (i, k) => { const v = Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
+function wear(el, i, side) {
+  const o = side === 'R' ? 20 : 0, r = (k) => rand(i, k + o);
+  const v = {
+    s1x: 12 + r(1) * 76 + '%', s1y: 15 + r(2) * 72 + '%', s1r: 9 + r(3) * 16 + '%',
+    s2x: 10 + r(4) * 80 + '%', s2y: 10 + r(5) * 80 + '%', s2r: r(6) < 0.45 ? '0%' : 6 + r(7) * 10 + '%',
+    fox: `-${Math.round(r(8) * 600)}px -${Math.round(r(9) * 600)}px`,
+  };
+  for (const k in v) el.style.setProperty('--' + k, v[k]);
+}
+const ear = (i, side) => (side === 'R' ? i % 3 === 0 : i % 3 === 1) ? `<i class="ear ${side === 'R' ? 'br' : 'tl'}"></i>` : '';
 const lum = (h) => (0.3 * parseInt(h.slice(1, 3), 16) + 0.59 * parseInt(h.slice(3, 5), 16) + 0.11 * parseInt(h.slice(5, 7), 16)) / 255;
 
 export class Book {
@@ -29,14 +41,14 @@ export class Book {
     return `<div class="pg">
       <div class="run"><span>Plate ${ROMAN[i]}</span><span>${ch.title}</span></div>
       <figure class="plate">
-        <img src="${this.plateURL(i)}" alt="Drawing of a ${s.common}, wings spread, seen from above" />
+        <img src="${this.plateURL(i)}" alt="${s.photo ? "Photograph" : "Drawing"} of a ${s.common}, wings spread, seen from above" />
         <figcaption>Fig. ${i + 1}. ${s.latin}, upper side. Wingspan ${s.span}.</figcaption>
       </figure>
       <table class="werner"><caption>Colours observed</caption>
         ${s.chips.map(([n, h, w]) => `<tr><td style="--c:${h}"></td><td>${n}</td><td>${w}</td></tr>`).join('')}
       </table>
       <div class="folio">${i * 2 + 8}</div>
-    </div>`;
+    </div>${ear(i, 'L')}`;
   }
 
   rightHTML(i) {
@@ -57,13 +69,15 @@ export class Book {
       <h3>On its colour</h3>
       <p>${s.colour}</p>
       <div class="folio">${i * 2 + 9}</div>
-    </div>`;
+    </div>${ear(i, 'R')}`;
   }
 
   render(i) {
     this.i = i;
     this.L.innerHTML = this.leftHTML(i);
     this.R.innerHTML = this.rightHTML(i);
+    wear(this.L, i, 'L');
+    wear(this.R, i, 'R');
     this.buttons();
   }
   buttons() {
@@ -149,13 +163,17 @@ export class Book {
       back.className = 'page face back ' + (fwd ? 'as-left' : 'as-right');
       front.innerHTML = fwd ? this.rightHTML(i) : this.leftHTML(i);
       back.innerHTML = fwd ? this.leftHTML(j) : this.rightHTML(j);
+      wear(front, i, fwd ? 'R' : 'L');
+      wear(back, j, fwd ? 'L' : 'R');
       (fwd ? this.R : this.L).innerHTML = fwd ? this.rightHTML(j) : this.leftHTML(j);
+      wear(fwd ? this.R : this.L, j, fwd ? 'R' : 'L');
       this.leaf.hidden = false;
       await this.leaf.animate(
         [{ transform: 'rotateY(0deg)' }, { transform: `rotateY(${fwd ? -180 : 180}deg)` }],
         { duration: 950, easing: 'cubic-bezier(.45,.05,.3,1)' }
       ).finished;
       (fwd ? this.L : this.R).innerHTML = fwd ? this.leftHTML(j) : this.rightHTML(j);
+      wear(fwd ? this.L : this.R, j, fwd ? 'L' : 'R');
       this.leaf.hidden = true;
       this.i = j;
       this.buttons();

@@ -3,8 +3,9 @@
   --bg2: #f6f0e0;
   --ink: #1c1712;
   --accent: #d8452b;
-  --paper: #efe5cd;
-  --paper-ink: #2a2118;
+  --paper: #e9d8b2;
+  --paper-ink: #34241a;
+  --sepia: 92, 58, 24;
   --display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
   --text: 'EB Garamond', 'Iowan Old Style', Georgia, serif;
   scrollbar-gutter: stable;
@@ -154,48 +155,96 @@ h1 em { font-weight: 300; color: var(--accent); padding-left: 0.5em; }
   position: relative; width: min(1240px, 94vw); height: min(86svh, calc(min(1240px, 94vw) * 0.68));
   display: grid; grid-template-columns: 1fr 1fr; transform-style: preserve-3d;
 }
+/* Pages: old map paper. Mottled, foxed and folded underneath the ink; neatline and stains on top.
+   Stain positions come from --s1x… set per spread in book.js, so no two spreads wear alike. */
 .page {
   position: relative; background-color: var(--paper); color: var(--paper-ink); overflow: hidden; container-type: size;
+  --s1x: 70%; --s1y: 78%; --s1r: 22%; --s2x: 18%; --s2y: 20%; --s2r: 14%; --fox: 0 0;
+  --crease: transparent calc(50% - 22px), rgba(var(--sepia), 0.07) calc(50% - 2px), rgba(255, 249, 232, 0.75) calc(50% - 1px), rgba(var(--sepia), 0.3) calc(50% + 0.5px), rgba(var(--sepia), 0.1) calc(50% + 3px), transparent calc(50% + 24px);
   background-image:
-    radial-gradient(60% 40% at 78% 88%, rgba(150, 105, 50, 0.1), transparent 70%),
-    radial-gradient(40% 30% at 12% 8%, rgba(150, 105, 50, 0.09), transparent 70%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .7' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .3 0 0 0 0 .16 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    radial-gradient(130% 120% at 50% 50%, transparent 50%, rgba(var(--sepia), 0.14) 80%, rgba(var(--sepia), 0.38) 100%),
+    linear-gradient(90deg, var(--crease)),
+    linear-gradient(180deg, var(--crease)),
+    radial-gradient(60% 40% at 78% 88%, rgba(150, 100, 40, 0.12), transparent 70%),
+    radial-gradient(40% 30% at 12% 8%, rgba(150, 100, 40, 0.11), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='1400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.08' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .48 0 0 0 0 .27 0 0 0 0 .08 0 0 0 16 -11.9'/%3E%3CfeGaussianBlur stdDeviation='.6'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='.5'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='1400'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005' numOctaves='4' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .32 0 0 0 0 .12 0 0 0 .9 -.33'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .3 0 0 0 0 .16 0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, var(--fox), var(--fox), 0 0;
   backface-visibility: hidden;
 }
-.page.left { transform-origin: 100% 50%; border-radius: 5px 0 0 5px; box-shadow: -1px 0 0 #d8ccb0, -3px 1px 0 #e6dcc2, -5px 2px 0 #d2c6aa, -7px 3px 0 #e6dcc2, -18px 26px 50px rgba(0, 0, 0, 0.4); }
-.page.right { transform-origin: 0 50%; border-radius: 0 5px 5px 0; box-shadow: 1px 0 0 #d8ccb0, 3px 1px 0 #e6dcc2, 5px 2px 0 #d2c6aa, 7px 3px 0 #e6dcc2, 18px 26px 50px rgba(0, 0, 0, 0.4); }
-.page.left::after, .page.right::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
-.page.left::after { background: linear-gradient(to left, rgba(60, 35, 10, 0.3), rgba(60, 35, 10, 0.07) 5%, transparent 16%); }
-.page.right::after { background: linear-gradient(to right, rgba(60, 35, 10, 0.3), rgba(60, 35, 10, 0.07) 5%, transparent 16%); }
+/* over the ink: the neatline with its barred map border, and tide-marked water stains */
+.page::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2; mix-blend-mode: multiply;
+  --nl: rgba(58, 38, 20, 0.72); --ix: 4.2cqw; --iy: 3.2cqh; --b: 6px;
+  background:
+    linear-gradient(var(--nl), var(--nl)) var(--ix) var(--iy) / calc(100% - 2 * var(--ix)) 1px no-repeat,
+    linear-gradient(var(--nl), var(--nl)) var(--ix) calc(100% - var(--iy)) / calc(100% - 2 * var(--ix)) 1px no-repeat,
+    linear-gradient(var(--nl), var(--nl)) var(--ix) var(--iy) / 1px calc(100% - 2 * var(--iy)) no-repeat,
+    linear-gradient(var(--nl), var(--nl)) calc(100% - var(--ix)) var(--iy) / 1px calc(100% - 2 * var(--iy)) no-repeat,
+    linear-gradient(var(--nl), var(--nl)) calc(var(--ix) + var(--b)) calc(var(--iy) + var(--b)) / calc(100% - 2 * var(--ix) - 2 * var(--b)) 1px no-repeat,
+    linear-gradient(var(--nl), var(--nl)) calc(var(--ix) + var(--b)) calc(100% - var(--iy) - var(--b)) / calc(100% - 2 * var(--ix) - 2 * var(--b)) 1px no-repeat,
+    linear-gradient(var(--nl), var(--nl)) calc(var(--ix) + var(--b)) calc(var(--iy) + var(--b)) / 1px calc(100% - 2 * var(--iy) - 2 * var(--b)) no-repeat,
+    linear-gradient(var(--nl), var(--nl)) calc(100% - var(--ix) - var(--b)) calc(var(--iy) + var(--b)) / 1px calc(100% - 2 * var(--iy) - 2 * var(--b)) no-repeat,
+    repeating-linear-gradient(90deg, var(--nl) 0 3cqw, transparent 3cqw 6cqw) calc(var(--ix) + var(--b)) calc(var(--iy) + 1px) / calc(100% - 2 * var(--ix) - 2 * var(--b)) calc(var(--b) - 1px) no-repeat,
+    repeating-linear-gradient(90deg, var(--nl) 0 3cqw, transparent 3cqw 6cqw) calc(var(--ix) + var(--b)) calc(100% - var(--iy) - 1px) / calc(100% - 2 * var(--ix) - 2 * var(--b)) calc(var(--b) - 1px) no-repeat,
+    repeating-linear-gradient(180deg, var(--nl) 0 3cqh, transparent 3cqh 6cqh) calc(var(--ix) + 1px) calc(var(--iy) + var(--b)) / calc(var(--b) - 1px) calc(100% - 2 * var(--iy) - 2 * var(--b)) no-repeat,
+    repeating-linear-gradient(180deg, var(--nl) 0 3cqh, transparent 3cqh 6cqh) calc(100% - var(--ix) - 1px) calc(var(--iy) + var(--b)) / calc(var(--b) - 1px) calc(100% - 2 * var(--iy) - 2 * var(--b)) no-repeat,
+    radial-gradient(circle at var(--s1x) var(--s1y), rgba(var(--sepia), 0.05) 0, rgba(var(--sepia), 0.09) calc(var(--s1r) - 1.2%), rgba(var(--sepia), 0.24) var(--s1r), rgba(var(--sepia), 0.05) calc(var(--s1r) + 0.6%), transparent calc(var(--s1r) + 2.5%)),
+    radial-gradient(ellipse 100% 80% at var(--s2x) var(--s2y), rgba(var(--sepia), 0.03) 0, rgba(var(--sepia), 0.07) calc(var(--s2r) - 1%), rgba(var(--sepia), 0.2) var(--s2r), transparent calc(var(--s2r) + 2%));
+}
+.page.left { transform-origin: 100% 50%; border-radius: 5px 0 0 5px; box-shadow: inset 0 0 0 1px rgba(var(--sepia), 0.35), inset 0 0 22px rgba(90, 50, 15, 0.35), -1px 0 0 #cdb98f, -3px 1px 0 #ddc9a0, -5px 2px 0 #c6b088, -7px 3px 0 #dac59b, -18px 26px 50px rgba(0, 0, 0, 0.45); }
+.page.right { transform-origin: 0 50%; border-radius: 0 5px 5px 0; box-shadow: inset 0 0 0 1px rgba(var(--sepia), 0.35), inset 0 0 22px rgba(90, 50, 15, 0.35), 1px 0 0 #cdb98f, 3px 1px 0 #ddc9a0, 5px 2px 0 #c6b088, 7px 3px 0 #dac59b, 18px 26px 50px rgba(0, 0, 0, 0.45); }
+.page.left::after, .page.right::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.page.left::after { background: linear-gradient(to left, rgba(60, 35, 10, 0.34), rgba(60, 35, 10, 0.08) 5%, transparent 16%); }
+.page.right::after { background: linear-gradient(to right, rgba(60, 35, 10, 0.34), rgba(60, 35, 10, 0.08) 5%, transparent 16%); }
 
-.pg { position: absolute; inset: 0; padding: 6.5cqh 8cqw 7cqh; font-size: clamp(12px, 2.3cqh, 18px); line-height: 1.42; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
+/* a dog-eared corner: the page beneath shows through, the folded flap lies over it */
+.ear { position: absolute; width: 9cqw; aspect-ratio: 1; z-index: 4; pointer-events: none; filter: drop-shadow(-3px -3px 4px rgba(40, 20, 5, 0.45)); }
+.ear::before, .ear::after { content: ''; position: absolute; inset: 0; }
+.ear.br { right: 0; bottom: 0; }
+.ear.br::before { background: linear-gradient(135deg, #8e7448, #c4a970 70%); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.ear.br::after { background: linear-gradient(315deg, #f1e3c2, #d9c497 70%, #c4ab7c); clip-path: polygon(0 0, 100% 0, 0 100%); }
+.ear.tl { left: 0; top: 0; filter: drop-shadow(3px 3px 4px rgba(40, 20, 5, 0.45)); }
+.ear.tl::before { background: linear-gradient(315deg, #8e7448, #c4a970 70%); clip-path: polygon(0 0, 100% 0, 0 100%); }
+.ear.tl::after { background: linear-gradient(135deg, #f1e3c2, #d9c497 70%, #c4ab7c); clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+
+.pg { position: absolute; inset: 0; z-index: 1; padding: 7.5cqh 9cqw 8cqh; font-size: clamp(12px, 2.3cqh, 18px); line-height: 1.42; display: flex; flex-direction: column; overflow-y: auto; scrollbar-width: none; }
 .pg::-webkit-scrollbar { display: none; }
-.left .pg, .as-left .pg { padding-right: 9cqw; }
-.right .pg, .as-right .pg { padding-left: 9cqw; }
-.run { display: flex; justify-content: space-between; font-style: italic; font-size: 0.86em; border-bottom: 1px solid rgba(42, 33, 24, 0.5); padding-bottom: 0.5em; margin-bottom: 1.2em; flex: none; }
+.left .pg, .as-left .pg { padding-right: 10.5cqw; }
+.right .pg, .as-right .pg { padding-left: 10.5cqw; }
+.run { display: flex; justify-content: space-between; font-style: italic; font-size: 0.86em; border-bottom: 1px solid rgba(var(--sepia), 0.55); padding-bottom: 0.5em; margin-bottom: 1.2em; flex: none; letter-spacing: 0.02em; }
 .folio { margin-top: auto; padding-top: 1em; text-align: center; font-size: 0.86em; flex: none; }
 
-.plate { margin: 0; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.plate { margin: 0; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+.plate::before {
+  content: ''; position: absolute; inset: 0 0 2.2em; pointer-events: none; opacity: 0.55;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(12.5% - 1px), rgba(var(--sepia), 0.32) calc(12.5% - 1px) 12.5%),
+    repeating-linear-gradient(180deg, transparent 0 calc(16.66% - 1px), rgba(var(--sepia), 0.32) calc(16.66% - 1px) 16.66%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 40%, transparent); mask-image: radial-gradient(closest-side, #000 40%, transparent);
+}
+.plate img { position: relative; }
 .plate img { max-width: 96%; max-height: 100%; min-height: 0; object-fit: contain; flex: 0 1 auto; }
 .plate figcaption { font-style: italic; font-size: 0.88em; text-align: center; margin-top: 0.8em; flex: none; }
 .werner { width: 100%; border-collapse: collapse; margin-top: 1.4em; font-size: 0.86em; flex: none; }
 .werner caption { text-align: left; font-style: italic; padding-bottom: 0.5em; }
-.werner td { border: 1px solid rgba(42, 33, 24, 0.55); padding: 0.4em 0.6em; vertical-align: middle; line-height: 1.2; }
-.werner td:first-child { width: 3.2em; padding: 0; background: var(--c); }
+.werner td { border: 1px solid rgba(var(--sepia), 0.6); padding: 0.4em 0.6em; vertical-align: middle; line-height: 1.2; }
+.werner td:first-child { width: 3.2em; padding: 0; background: color-mix(in srgb, var(--c) 84%, #b8955c); } /* hand-tinted, and faded */
 .werner td:nth-child(2) { width: 34%; }
 .werner td:last-child { font-style: italic; }
 
 .pg h2 { font-family: var(--display); font-weight: 400; font-variation-settings: 'opsz' 100; font-size: 2.7em; line-height: 0.95; letter-spacing: -0.03em; margin: 0; text-wrap: balance; }
 .pg .latin { font-style: italic; font-size: 1.15em; margin: 0.35em 0 1em; }
 .pg .latin span { font-style: normal; font-size: 0.85em; }
-.pg dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15em 1.2em; margin: 0 0 1.1em; padding: 0.7em 0; border-block: 1px solid rgba(42, 33, 24, 0.5); font-size: 0.92em; line-height: 1.3; }
+.pg dl { display: grid; grid-template-columns: auto 1fr; gap: 0.15em 1.2em; margin: 0 0 1.1em; padding: 0.7em 0; border-block: 1px solid rgba(var(--sepia), 0.55); font-size: 0.92em; line-height: 1.3; }
 .pg dt { font-style: italic; }
 .pg dd { margin: 0; }
 .pg p { margin: 0; text-align: justify; hyphens: auto; }
 .pg p + p { text-indent: 1.4em; }
 .pg p.first::first-letter { font-family: var(--display); font-weight: 400; float: left; font-size: 3.5em; line-height: 0.78; padding: 0.08em 0.1em 0 0; color: var(--c); }
 .pg h3 { font-family: var(--text); font-weight: 400; font-style: italic; font-size: 1em; margin: 1.1em 0 0.25em; display: flex; align-items: center; gap: 0.8em; }
-.pg h3::after { content: ''; flex: 1; border-top: 1px solid rgba(42, 33, 24, 0.5); }
+.pg h3::after { content: ''; flex: 1; border-top: 1px solid rgba(var(--sepia), 0.55); }
 
 .leaf { position: absolute; top: 0; bottom: 0; width: 50%; transform-style: preserve-3d; z-index: 2; }
 .leaf[hidden] { display: none; }
@@ -203,7 +252,7 @@ h1 em { font-weight: 300; color: var(--accent); padding-left: 0.5em; }
 .leaf.bwd { left: 0; transform-origin: 100% 50%; }
 .leaf .face { position: absolute; inset: 0; }
 .leaf .back { transform: rotateY(180deg); }
-.leaf .face::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
+.leaf .face::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3; }
 .leaf.fwd .front::after, .leaf.bwd .back::after { background: linear-gradient(to right, rgba(60, 35, 10, 0.3), transparent 16%); }
 .leaf.fwd .back::after, .leaf.bwd .front::after { background: linear-gradient(to left, rgba(60, 35, 10, 0.3), transparent 16%); }
 
@@ -238,7 +287,9 @@ h1 em { font-weight: 300; color: var(--accent); padding-left: 0.5em; }
   .page { container-type: normal; border-radius: 4px !important; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3) !important; }
   .page + .page { margin-top: 0.7rem; }
   .page::after { display: none; }
-  .pg { position: static; font-size: 1rem; padding: 1.6rem 1.3rem !important; overflow: visible; }
+  .page::before { --ix: 0.45rem; --iy: 0.45rem; }
+  .ear { width: 2.6rem; }
+  .pg { position: relative; font-size: 1rem; padding: 2rem 1.7rem !important; overflow: visible; }
   .plate img { max-height: 44svh; }
   .leaf { display: none !important; }
   .turn { position: fixed; top: auto; bottom: 1rem; translate: none; background: var(--bg); }
