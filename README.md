@@ -6,7 +6,7 @@
 
 ![The title page, with butterflies drifting across it](screenshots/01-title.jpg)
 
-Wingbook is a small atlas of twenty-two butterflies. It is ordered the way a painter would order them: by colour, from blue through green, yellow, orange and red to the browns, ending with a butterfly that has no colour at all.
+Wingbook is a small atlas of twenty-eight butterflies. It is ordered the way a painter would order them: by colour, from blue through green, yellow, orange and red to the browns, ending with a butterfly that has no colour at all.
 
 ## What it's like
 
@@ -20,9 +20,9 @@ Wingbook is a small atlas of twenty-two butterflies. It is ordered the way a pai
 
 ![The encyclopedia page for the Peacock](screenshots/04-encyclopedia.jpg)
 
-**The cabinet** at the end shows all twenty-two at once, like a collector's drawer.
+**The cabinet** at the end shows all twenty-eight at once, like a collector's drawer.
 
-![The cabinet: all twenty-two butterflies in a grid](screenshots/05-cabinet.jpg)
+![The cabinet: all twenty-eight butterflies in a grid](screenshots/05-cabinet.jpg)
 
 It works on phones too.
 
@@ -30,7 +30,7 @@ It works on phones too.
 
 ## Good to know
 
-- Twenty of the butterflies are drawn by the site itself, scale by scale, and simplified, so the real insects are more detailed than these. The Blue Morpho and the Glasswing are photographs of real specimens.
+- Twenty-six of the butterflies are drawn by the site itself, scale by scale, and simplified, so the real insects are more detailed than these. The Blue Morpho and the Glasswing are photographs of real specimens.
 - There are around 18,000 kinds of butterfly. This is a first drawer, not the whole collection.
 - The colour names follow *Werner's Nomenclature of Colours* (1821), a book of colour names that naturalists, Darwin among them, carried into the field.
 

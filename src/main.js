@@ -54,7 +54,7 @@ const cab = document.createElement('section');
 cab.className = 'cabinet';
 cab.id = 'cabinet';
 cab.innerHTML = `<h2>The <em>cabinet</em></h2>
-  <p class="cab-sub">All twenty-two, pinned in the order of the spectrum. Choose one to read its page.</p>
+  <p class="cab-sub">All twenty-eight, pinned in the order of the spectrum. Choose one to read its page.</p>
   <div class="drawer" id="drawer"></div>
   <p class="colophon">Most wings here are drawn in code from a description of their pattern, and the drawings simplify what the living insect does better; the Blue Morpho and the Glasswing are photographs of real specimens. About 18,000 butterfly species have been described, so this is a first drawer, not the whole cabinet. Colour names follow the manner of Werner’s Nomenclature of Colours (Syme, 1821).</p>`;
 flow.append(cab);
